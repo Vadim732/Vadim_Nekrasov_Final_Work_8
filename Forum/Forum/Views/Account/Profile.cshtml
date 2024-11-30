@@ -13,7 +13,11 @@
             <div class="d-flex align-items-center mb-2">
                 <h2 class="me-3">@Model.UserName</h2>
                 <a asp-action="Edit" asp-controller="Account" asp-route-userId="@ViewBag.currentUserId" class="btn btn-outline-secondary"><i class="fa-solid fa-user-pen"></i> Редактировать</a>
-                <a class="btn btn-outline-danger ml-1" asp-controller="Account" asp-action="Logout"><i class="fa-solid fa-door-open"></i> Выйти</a>
+                @if (User.IsInRole("user"))
+                {
+                    <a asp-action="DeleteAccount" asp-controller="Account" onclick="event.preventDefault(); document.getElementById('delete-account-form').submit();" class="btn btn-outline-danger ml-1"> <i class="fa-solid fa-user-minus"></i> Удалить аккаунт</a>
+                    <form id="delete-account-form" asp-action="DeleteAccount" asp-controller="Account" method="post">@Html.AntiForgeryToken()</form>
+                }
             </div>
             <h6 class="text-muted"><i class="fa-solid fa-calendar-days"></i> @Model.DateOfBirth.ToString("dd.MM.yyyy")</h6>
             <div class="mt-4">

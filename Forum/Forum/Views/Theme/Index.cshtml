@@ -16,26 +16,26 @@
     </tr>
     </thead>
     <tbody id="themes">
-    @if (Model.Themes != null && Model.Themes.Any())
-    {
-        @foreach (var theme in Model.Themes)
+        @if (Model.Themes != null && Model.Themes.Any())
+        {
+            @foreach (var theme in Model.Themes)
+            {
+                <tr class="theme-row" data-href="@Url.Action("Details", "Theme", new { themeId = theme.Id })">
+                    <td>
+                        <strong>@theme.Title</strong>
+                    </td>
+                    <td><p class="text-secondary">@theme.DateOfCreation.ToString("g")</p></td>
+                    <td>@theme.User?.UserName</td>
+                    <td>@(theme.Messages?.Count() ?? 0)</td>
+                </tr>
+            }
+        }
+        else
         {
             <tr>
-                <td>
-                    <a asp-action="Details" asp-controller="Theme" asp-route-themeId="@theme.Id" class="text-dark"><strong>@theme.Title</strong></a>
-                </td>
-                <td><p class="text-secondary">@theme.DateOfCreation.ToString("g")</p></td>
-                <td>@theme.User?.UserName</td>
-                <td>@(theme.Messages?.Count() ?? 0)</td>
+                <td colspan="4" class="text-center">К сожалению тем ещё нет :с</td>
             </tr>
         }
-    }
-    else
-    {
-        <tr>
-            <td colspan="4" class="text-center">К сожалению тем ещё нет :с</td>
-        </tr>
-    }
     </tbody>
 </table>
 
@@ -92,6 +92,11 @@
                     }
                 });
             }
+            
+            $('.theme-row').on('click', function () {
+                window.location = $(this).data('href');
+            }); 
+            $('.theme-row').css('cursor', 'pointer');
         });
     </script>
 }

@@ -1,1 +1,199 @@
-﻿<h2>title</h2>
+﻿@model Forum.ViewModels.MessageIndexViewModel
+
+@{
+    ViewBag.Title = "Детали темы";
+}
+
+<div class="bg-dark text-white pa-1 mb-3">
+    <h2 class="text-center mb-2">@Model.Theme.Title</h2>
+    <strong><i class="fa-solid fa-user"></i> Автор:</strong><p class="theme-text-1"> @Model.Theme.User?.UserName</p>
+    <strong><i class="fa-solid fa-calendar-days"></i> Дата создания:</strong><p class="theme-text-1"> @Model.Theme.DateOfCreation</p>
+    <strong><i class="fa-solid fa-audio-description"></i> Описание темы:</strong><p class="theme-text-1"> @Model.Theme.Description</p>
+    @if (User.Identity.IsAuthenticated)
+    {
+        <div class="d-flex justify-content-center">
+            <button id="reply-button" class="btn btn-outline-light w-25"><i class="fa-regular fa-comment"></i> Ответить</button>
+        </div>
+    }
+</div>
+
+<div id="messages-container">
+    <table class="table table-striped">
+        <thead class="table-dark">
+        <tr>
+            <th></th>
+            <th>Автор</th>
+            <th>Комментарий</th>
+            <th>Дата</th>
+        </tr>
+        </thead>
+        <tbody id="messages">
+        @if (Model.Messages.Count > 0)
+        {
+            @foreach (var messages in Model.Messages)
+            {
+                <tr>
+                    <td><a asp-action="Profile" asp-route-userid="@messages.UserId" asp-controller="Account"><img src="@messages.User?.Avatar" alt="User avatar" width="50" height="50"/></a></td>
+                    <td><a class="text-decoration-none text-black" asp-action="Profile" asp-route-userid="@messages.UserId" asp-controller="Account"><strong>@messages.User?.UserName</strong></a>
+                        <br />
+                        <small>Сообщений: @messages.User?.MessageCount</small>
+                    </td>
+                    <td><p class="text-primary">@messages.Text</p></td>
+                    <td><p class="text-secondary">@messages.DateOfDispatch</p></td>
+                </tr>
+            }
+        }
+        else
+        {
+            <tr>
+                <td class="text-center">Сообщений ещё нет :с</td>
+            </tr>
+        }
+        </tbody>
+    </table>
+    <nav aria-label="Page navigation">
+        <ul class="pagination">
+            @if (Model.PageViewModel.HasPreviousPage)
+            {
+                <li class="page-item">
+                    <a class="page-link bg-dark text-white" href="#" data-page="@(Model.PageViewModel.PageNumber - 1)">
+                        <i class="fa-solid fa-arrow-left"></i> Назад
+                    </a>
+                </li>
+            }
+            @for (int i = 1; i <= Model.PageViewModel.TotalPages; i++)
+            {
+                <li class="page-item @(i == Model.PageViewModel.PageNumber ? "active" : "")">
+                    <a class="page-link bg-dark text-white" href="#" data-page="@i">@i</a>
+                </li>
+            }
+            @if (Model.PageViewModel.HasNextPage)
+            {
+                <li class="page-item">
+                    <a class="page-link bg-dark text-white" href="#" data-page="@(Model.PageViewModel.PageNumber + 1)">
+                        Вперёд <i class="fa-solid fa-arrow-right"></i>
+                    </a>
+                </li>
+            }
+        </ul>
+    </nav>
+
+</div>
+
+<div class="modal fade" id="replyModal" tabindex="-1" aria-labelledby="replyModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="replyModalLabel">Добавить комментарий</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body bg-dark text-white">
+                <form id="message-form">
+                    <div class="form-group">
+                        <textarea id="text" name="text" class="form-control" placeholder="Введите комментарий..." rows="3"></textarea>
+                        <input type="hidden" id="themeId" name="themeId" value="@Model.Theme.Id" />
+                        <span class="text-danger" id="error-message"></span>
+                    </div>
+                    <div class="d-flex justify-content-center mt-3">
+                        <button type="submit" class="btn btn-outline-light w-50">Отправить</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{ await Html.RenderPartialAsync("_ValidationScriptsPartial"); }
+    <script>
+        $(document).ready(function () {
+            const replyModalElement = document.getElementById('replyModal');
+            const replyModal = new bootstrap.Modal(replyModalElement);
+    
+            $('#reply-button').on('click', function () {
+                replyModal.show();
+            });
+    
+            $('#message-form').on('submit', function (e) {
+                e.preventDefault();
+                const form = $(this);
+                const actionUrl = '/Theme/AddMessage';
+    
+                $.ajax({
+                    type: 'POST',
+                    url: actionUrl,
+                    data: form.serialize(),
+                    success: function (response) {
+                        if (response.success) {
+                            const totalPages = response.totalPages;
+                            const themeId = @Model.Theme.Id;
+    
+                            $.get('/Theme/Details', { themeId: themeId, page: totalPages }, function (data) {
+                                if (data.success && data.messages) {
+                                    updateMessages(data);
+                                    replyModal.hide();
+                                }
+                            });
+                        } else {
+                            $('#error-message').text(response.error || "Ошибка добавления комментария ( это печально :с ).");
+                        }
+                    },
+                    error: function (xhr) {
+                        const errorMessage = xhr.responseJSON ? xhr.responseJSON.message : "Ошибка добавления комментария ( грустно :,с ).";
+                        $('#error-message').text(errorMessage);
+                    }
+                });
+            });
+    
+            $(document).on('click', '.page-link', function (e) {
+                e.preventDefault();
+                const page = $(this).data('page');
+                const themeId = @Model.Theme.Id;
+                $.get('/Theme/Details', { themeId: themeId, page: page }, function (data) {
+                    if (data.success && data.messages) {
+                        updateMessages(data);
+                    }
+                });
+            });
+    
+            function updateMessages(data) {
+                let messagesHtml = '';
+                $.each(data.messages, function (index, message) {
+                    messagesHtml += `
+                        <tr>
+                            <td>
+                                <img src="${message.userAvatar || ''}" alt="Avatar" width="50" height="50">
+                            </td>
+                            <td>${message.userNickName || 'Ошибка отображения имени пользователя ( это печально :с ).'}</td>
+                            <td>${message.text || 'Ошибка отображения комментария ( это печально :с ).'}</td>
+                            <td>${message.dateOfDispatch || 'Ошибка отображения даты ( это печально :с ).'}</td>
+                        </tr>`;
+                });
+                $('#messages').html(messagesHtml);
+            
+                let paginationHtml = '';
+                if (data.pagination.hasPrevious) {
+                    paginationHtml += `<li class="page-item">
+                        <a class="page-link bg-dark text-white" href="#" data-page="${data.pagination.currentPage - 1}">
+                            <i class="fa-solid fa-arrow-left"></i> Назад
+                        </a>
+                    </li>`;
+                }
+                for (let i = 1; i <= data.pagination.totalPages; i++) {
+                    paginationHtml += `<li class="page-item ${i === data.pagination.currentPage ? 'active' : ''}">
+                        <a class="page-link bg-dark text-white" href="#" data-page="${i}">${i}</a>
+                    </li>`;
+                }
+                if (data.pagination.hasNextPage) {
+                    paginationHtml += `<li class="page-item">
+                        <a class="page-link bg-dark text-white" href="#" data-page="${data.pagination.currentPage + 1}">
+                            Вперёд <i class="fa-solid fa-arrow-right"></i>
+                        </a>
+                    </li>`;
+                }
+                $('.pagination').html(paginationHtml);
+                $('#text').val('');
+            }
+        });
+    </script>
+}

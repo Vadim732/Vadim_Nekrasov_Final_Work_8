@@ -3,6 +3,7 @@ using Forum.ViewModels;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using SignInResult = Microsoft.AspNetCore.Identity.SignInResult;
 
 namespace Forum.Controllers;
@@ -398,5 +399,24 @@ public class AccountController : Controller
     {
         await _signInManager.SignOutAsync();
         return RedirectToAction("Login");
+    }
+
+    [HttpPost]
+    [Authorize(Roles = "user")]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> DeleteAccount()
+    {
+        var user = await _userManager.GetUserAsync(User);
+        var themes = _context.Themes.Where(t => t.UserId == user.Id).ToList();
+        _context.Themes.RemoveRange(themes);
+        await _context.SaveChangesAsync();
+        var result = await _userManager.DeleteAsync(user);
+        if (!result.Succeeded)
+        {
+            ModelState.AddModelError("", "Ошибка удаления аккаунта :с");
+        }
+
+        await _signInManager.SignOutAsync();
+        return RedirectToAction("Index", "Home");
     }
 }
