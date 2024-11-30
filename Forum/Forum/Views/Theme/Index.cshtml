@@ -1,1 +1,97 @@
-﻿<h2>title</h2>
+﻿@model Forum.ViewModels.ThemeIndexViewModel
+
+@{
+    ViewBag.Title = "Темы форума";
+}
+
+<h2 class="text-center mb-3 mt-3">Темы форума</h2>
+
+<table class="table table-striped">
+    <thead class="table-dark">
+    <tr>
+        <th><i class="fa-solid fa-file-signature"></i> Название</th>
+        <th><i class="fa-solid fa-calendar-days"></i> Дата создания</th>
+        <th><i class="fa-solid fa-user"></i> Автор</th>
+        <th><i class="fa-solid fa-comment"></i> Количество ответов</th>
+    </tr>
+    </thead>
+    <tbody id="themes">
+    @if (Model.Themes != null && Model.Themes.Any())
+    {
+        @foreach (var theme in Model.Themes)
+        {
+            <tr>
+                <td>
+                    <a asp-action="Details" asp-controller="Theme" asp-route-themeId="@theme.Id" class="text-dark"><strong>@theme.Title</strong></a>
+                </td>
+                <td><p class="text-secondary">@theme.DateOfCreation.ToString("g")</p></td>
+                <td>@theme.User?.UserName</td>
+                <td>@(theme.Messages?.Count() ?? 0)</td>
+            </tr>
+        }
+    }
+    else
+    {
+        <tr>
+            <td colspan="4" class="text-center">К сожалению тем ещё нет :с</td>
+        </tr>
+    }
+    </tbody>
+</table>
+
+<nav aria-label="Page navigation">
+    <ul class="pagination" id="pagination">
+        @if (Model.PageViewModel.HasPreviousPage)
+        {
+            <li class="page-item">
+                <a class="page-link bg-dark text-white" href="#" data-page="@(Model.PageViewModel.PageNumber - 1)"><i class="fa-solid fa-arrow-left"></i> Назад</a>
+            </li>
+        }
+        @for (int i = 1; i <= Model.PageViewModel.TotalPages; i++)
+        {
+            <li class="page-item @(i == Model.PageViewModel.PageNumber ? "active" : "")">
+                <a class="page-link bg-dark text-white" href="#" data-page="@i">@i</a>
+            </li>
+        }
+        @if (Model.PageViewModel.PageNumber < Model.PageViewModel.TotalPages)
+        {
+            <li class="page-item">
+                <a class="page-link bg-dark text-white" href="#" data-page="@(Model.PageViewModel.PageNumber + 1)">Вперёд <i class="fa-solid fa-arrow-right"></i></a>
+            </li>
+        }
+    </ul>
+</nav>
+
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+            $(document).on('click', '.page-link', function (e) {
+                e.preventDefault();
+                var page = $(this).data('page');
+                loadThemes(page);
+            });
+            setInterval(function () {
+                loadThemes(null, true);
+            }, 30000);
+
+            function loadThemes(page = 1, autoUpdate = false) {
+                $.get('/Theme/Index', { page: page }, function (response) {
+                    var html = $(response);
+                    var newThemes = html.find('#themes').html();
+                    var newPagination = html.find('#pagination').html();
+                    if (!autoUpdate || ($('#themes').html() !== newThemes)) {
+                        $('#themes').html(newThemes);
+                    }
+                    if (!autoUpdate) {
+                        $('#pagination').html(newPagination);
+                        $('.page-link').off('click').on('click', function (e) {
+                            e.preventDefault();
+                            var page = $(this).data('page');
+                            loadThemes(page);
+                        });
+                    }
+                });
+            }
+        });
+    </script>
+}
