@@ -417,6 +417,6 @@ public class AccountController : Controller
         }
 
         await _signInManager.SignOutAsync();
-        return RedirectToAction("Index", "Home");
+        return RedirectToAction("Login", "Account");
     }
 }

@@ -73,7 +73,7 @@
             setInterval(function () {
                 loadThemes(null, true);
             }, 30000);
-
+    
             function loadThemes(page = 1, autoUpdate = false) {
                 $.get('/Theme/Index', { page: page }, function (response) {
                     var html = $(response);
@@ -84,19 +84,14 @@
                     }
                     if (!autoUpdate) {
                         $('#pagination').html(newPagination);
-                        $('.page-link').off('click').on('click', function (e) {
-                            e.preventDefault();
-                            var page = $(this).data('page');
-                            loadThemes(page);
-                        });
                     }
                 });
             }
             
-            $('.theme-row').on('click', function () {
+            $('#themes').on('click', '.theme-row', function () {
                 window.location = $(this).data('href');
-            }); 
-            $('.theme-row').css('cursor', 'pointer');
+            });
+            $('#themes').css('cursor', 'pointer');
         });
     </script>
 }

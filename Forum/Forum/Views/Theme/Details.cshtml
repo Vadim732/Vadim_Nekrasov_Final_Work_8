@@ -109,7 +109,7 @@
         $(document).ready(function () {
             const replyModalElement = document.getElementById('replyModal');
             const replyModal = new bootstrap.Modal(replyModalElement);
-    
+
             $('#reply-button').on('click', function () {
                 replyModal.show();
             });
@@ -118,7 +118,6 @@
                 e.preventDefault();
                 const form = $(this);
                 const actionUrl = '/Theme/AddMessage';
-    
                 $.ajax({
                     type: 'POST',
                     url: actionUrl,
@@ -162,15 +161,22 @@
                     messagesHtml += `
                         <tr>
                             <td>
-                                <img src="${message.userAvatar || ''}" alt="Avatar" width="50" height="50">
+                                <a href="/Account/Profile?userid=${message.userId}">
+                                    <img src="${message.userAvatar || ''}" alt="Avatar" width="50" height="50">
+                                </a>
                             </td>
-                            <td>${message.userNickName || 'Ошибка отображения имени пользователя ( это печально :с ).'}</td>
-                            <td>${message.text || 'Ошибка отображения комментария ( это печально :с ).'}</td>
-                            <td>${message.dateOfDispatch || 'Ошибка отображения даты ( это печально :с ).'}</td>
+                            <td>
+                                <a class="text-decoration-none text-black" href="/Account/Profile?userid=${message.userId}">
+                                    <strong>${message.userNickName || 'Ошибка отображения имени пользователя ( это печально :с ).'}</strong>
+                                </a><br />
+                                <small>Сообщений: ${message.userMessageCount || 0}</small>
+                            </td>
+                            <td><p class="text-primary">${message.text || 'Ошибка отображения комментария ( это печально :с ).'}</p></td>
+                            <td><p class="text-secondary">${message.dateOfDispatch || 'Ошибка отображения даты ( это печально :с ).'}</p></td>
                         </tr>`;
                 });
                 $('#messages').html(messagesHtml);
-            
+    
                 let paginationHtml = '';
                 if (data.pagination.hasPrevious) {
                     paginationHtml += `<li class="page-item">
@@ -192,7 +198,6 @@
                     </li>`;
                 }
                 $('.pagination').html(paginationHtml);
-                $('#text').val('');
             }
         });
     </script>
