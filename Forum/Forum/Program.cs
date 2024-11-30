@@ -4,7 +4,6 @@ using Microsoft.EntityFrameworkCore;
 using Forum.Models;
 using Forum.Services;
 
-
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllersWithViews();
@@ -55,3 +54,5 @@ app.MapControllerRoute(
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Theme}/{action=Index}/{id?}");
+
+app.Run();
