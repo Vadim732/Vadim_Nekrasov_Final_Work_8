@@ -79,6 +79,7 @@ public class ThemeController : Controller
                     {
                         UserAvatar = m.User?.Avatar,
                         UserNickName = m.User?.UserName,
+                        UserMessageCount = m.User?.MessageCount,
                         Text = m.Text,
                         DateOfDispatch = m.DateOfDispatch.ToString("g")
                     }),
